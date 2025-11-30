@@ -37,12 +37,10 @@ export default function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastActions, setLastActions] = useState<string[]>([]);
 
-  // Add a line to the in-memory conversation
   const addToHistory = (role: Role, text: string) => {
     setHistory((prev) => [...prev, { role, text, timestamp: Date.now() }]);
   };
 
-  // Main function when you send something to Jarvis
   const handleSendMessage = async (rawText: string) => {
     const trimmed = rawText.trim();
     if (!trimmed) return;
@@ -50,7 +48,6 @@ export default function App() {
     let messageText = trimmed;
     setLastActions([]);
 
-    // Wake word: "Hey Jarvis"
     if (wakeWordEnabled) {
       const lower = trimmed.toLowerCase();
       if (lower.startsWith("hey jarvis")) {
@@ -64,7 +61,6 @@ export default function App() {
         setLastJarvisText(reminder);
         addToHistory("assistant", reminder);
         Speech.speak(reminder);
-        // Clear input since we handled it
         setInputText("");
         return;
       }
@@ -72,11 +68,10 @@ export default function App() {
 
     setLastUserText(messageText);
     addToHistory("user", messageText);
-    setInputText(""); // <<< clear the input immediately
+    setInputText("");
     setIsProcessing(true);
 
     try {
-      // Local fake brain for now – no backend needed
       const res = await callJarvisLocally(history, messageText);
 
       setLastJarvisText(res.reply);
@@ -100,7 +95,6 @@ export default function App() {
     handleSendMessage(inputText);
   };
 
-  // For now, mic is just a placeholder in Expo Go
   const handleMicPress = () => {
     const msg =
       "Microphone control will work in a development build. For now, type to talk to me.";
@@ -115,20 +109,16 @@ export default function App() {
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        {/* Red infinity icon (Jarvis) */}
         <View style={styles.iconContainer}>
           <Ionicons name="infinite" size={75} color="#B51D1D" />
         </View>
 
-        {/* Your last spoken/typed text */}
         <Text style={styles.userText}>{lastUserText || ""}</Text>
 
-        {/* Jarvis last reply */}
         <Text style={styles.jarvisText}>
           {lastJarvisText || 'Just say or type: "Hey Jarvis…"'}
         </Text>
 
-        {/* Any smart-home actions (simulated right now) */}
         {lastActions.length > 0 && (
           <View style={styles.actionsContainer}>
             {lastActions.map((a, idx) => (
@@ -139,9 +129,7 @@ export default function App() {
           </View>
         )}
 
-        {/* Bottom controls */}
         <View style={styles.bottomPanel}>
-          {/* Wake word switch */}
           <View style={styles.wakeRow}>
             <Text style={styles.wakeLabel}>Wake word: "Hey Jarvis"</Text>
             <Switch
@@ -150,7 +138,6 @@ export default function App() {
             />
           </View>
 
-          {/* Mic button (placeholder for now) */}
           <TouchableOpacity
             style={styles.micButton}
             onPress={handleMicPress}
@@ -159,7 +146,6 @@ export default function App() {
             <Ionicons name="mic-outline" size={34} color="#FFFFFF" />
           </TouchableOpacity>
 
-          {/* Text input */}
           <View style={styles.inputRow}>
             <TextInput
               style={styles.input}
@@ -189,30 +175,52 @@ export default function App() {
 }
 
 /**
- * Local fake Jarvis brain – works fully in Expo Go.
- * Later we'll replace this with a real backend + OpenAI + Tapo.
+ * Local fake Jarvis brain – better responses now,
+ * while still working fully offline in Expo Go.
  */
 async function callJarvisLocally(
   history: ChatTurn[],
   newUserMessage: string
 ): Promise<JarvisResponse> {
-  // Tiny delay to feel like "thinking"
-  await new Promise((resolve) => setTimeout(resolve, 400));
+  await new Promise((resolve) => setTimeout(resolve, 350));
 
   const lower = newUserMessage.toLowerCase();
   const actions: string[] = [];
-  let reply = `You said: "${newUserMessage}". This is a local Jarvis test reply.`;
+  let reply = "";
 
-  // Simple fake "smart home" logic to show actions working
+  if (lower.includes("how are you")) {
+    reply =
+      "I don’t have feelings, but all systems are stable, and my code feels clean.";
+  } else if (lower.includes("who are you")) {
+    reply =
+      "I'm your Jarvis prototype. Running locally for now, but soon I'll connect to real AI and your smart home.";
+  } else if (lower.includes("what can you do")) {
+    reply =
+      "Right now, I can chat and simulate controlling your lights. Soon, I’ll remember things, help you study, and control your actual house.";
+  } else if (lower.includes("study")) {
+    reply =
+      "I’ll eventually help you revise paramedic topics, track weak areas, and even test you with flashcards.";
+  } else if (lower.includes("diablo")) {
+    reply =
+      "I don’t know your current Diablo build yet, but I like the idea of tracking your level, stats, and skill tree.";
+  }
+
   if (lower.includes("living room") && lower.includes("light")) {
     if (lower.includes("turn on") || lower.includes("switch on")) {
       actions.push("Simulated: Tapo living room lights ON");
-      reply = "Okay, turning on the living room lights (simulated).";
-    }
-    if (lower.includes("turn off") || lower.includes("switch off")) {
+      reply =
+        reply ||
+        "Turning on the living room lights. Simulated for now — real control coming soon.";
+    } else if (lower.includes("turn off") || lower.includes("switch off")) {
       actions.push("Simulated: Tapo living room lights OFF");
-      reply = "Okay, turning off the living room lights (simulated).";
+      reply =
+        reply ||
+        "Switching off the living room lights. Still just pretending, but we're getting closer.";
     }
+  }
+
+  if (!reply) {
+    reply = `"${newUserMessage}" — I hear you, but I’m still in local simulation mode. Soon I’ll be connected to a real AI backend.`;
   }
 
   return { reply, actions };
@@ -222,7 +230,6 @@ async function callJarvisLocally(
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    // Slightly greener matte olive
     backgroundColor: "#5C7A5A",
   },
   container: {
@@ -251,7 +258,7 @@ const styles = StyleSheet.create({
   },
   actionsText: {
     fontSize: 14,
-    color: "#DADADA",
+    color: "#DBDBDB",
     marginTop: 2,
   },
   bottomPanel: {
@@ -284,11 +291,11 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    backgroundColor: "#ffffff20",
+    backgroundColor: "#ffffff22",
     color: "#FFF",
-    borderRadius: 30,
+    borderRadius: 25,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 9,
     fontSize: 14,
   },
   sendButton: {
