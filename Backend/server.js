@@ -13,7 +13,7 @@ let fakeState = {
 
 app.post("/chat", (req, res) => {
   const { history, message } = req.body;
-  console.log("Incoming from app:", { message });
+  console.log("Incoming from application:", { message });
 
   let reply = `You said: "${message}". Backend is alive.`;
   const actions = [];
